@@ -6,23 +6,37 @@ import urllib3
 
 ROOT = 'http://www.imdb.com'
 
+HEADERS = {'accept':
+           'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+           'accept-encoding': 'gzip, deflate, br',
+           'accept-language': 'en-US,en;q=0.8',
+           'cache-control': 'max-age=0',
+           'dnt': '1',
+           'upgrade-insecure-requests': '1',
+           'user-agent':
+           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+           'Chrome/60.0.3112.78 '
+           'Safari/537.36 OPR/47.0.2631.55', }
 
-def get_list(movie):
+
+def req(url, **kwargs):
+    fields = kwargs.get('fields', {})
     timeout = urllib3.Timeout(connect=2.0, read=10.0)
     http = urllib3.PoolManager(timeout=timeout)
     result = http.request('GET',
-                          '{0}/find/'.format(ROOT, ),
-                          fields={"q": movie})
+                          url,
+                          fields=fields,
+                          headers=HEADERS)
     if result.status == 200:
         return result.data
+
+
+def get_list(movie):
+    return req('{0}/find/'.format(ROOT, ), fields={"q": movie})
 
 
 def get_page(link):
-    timeout = urllib3.Timeout(connect=2.0, read=10.0)
-    http = urllib3.PoolManager(timeout=timeout)
-    result = http.request('GET', link)
-    if result.status == 200:
-        return result.data
+    return req(link)
 
 
 def get_page_link(movie):
@@ -34,8 +48,10 @@ def get_page_link(movie):
 
 def get_rating(page):
     soup = BeautifulSoup(page, 'html.parser')
-    rating = soup.find('span', {'itemprop': 'contentRating'})
-    return rating.text
+    rating = soup.find('meta', {'itemprop': 'contentRating'})
+    if rating is not None:
+        return rating.attrs['content']
+    return ''
 
 
 def get_title(page):
@@ -53,7 +69,10 @@ def get_year(page):
 def get_rating_value(page):
     soup = BeautifulSoup(page, 'html.parser')
     rating_value = soup.find('span', {'itemprop': 'ratingValue'})
-    return rating_value.text
+    if rating_value is not None:
+        return rating_value.text
+    else:
+        return ''
 
 def get_parental_advisory_link(page):
     soup = BeautifulSoup(page, 'html.parser')
@@ -76,16 +95,16 @@ def get_parental_advisory(page):
 
 
 if __name__ == "__main__":
-    movie = ' '.join(sys.argv[1:])
-    page_link = get_page_link(movie)
-    page = get_page(page_link)
-    name = get_title(page)
-    rating = get_rating(page)
-    rtg_val = (float(get_rating_value(page)) * 10.0)
-    adv_link = get_parental_advisory_link(page)
+    movielookup = ' '.join(sys.argv[1:])
+    page_link = get_page_link(movielookup)
+    imdbpage = get_page(page_link)
+    name = get_title(imdbpage)
+    certification = get_rating(imdbpage)
+    rtg_val = (float(get_rating_value(imdbpage)) * 10.0)
+    adv_link = get_parental_advisory_link(imdbpage)
     adv_page = get_page(adv_link)
     print('Title: {0}'.format(name))
-    print('Certification: {0}'.format(rating, ))
+    print('Certification: {0}'.format(certification, ))
     print('Rating {0:.0f}%'.format(rtg_val, ))
     print('-' * 40)
     found_advisories = get_parental_advisory(adv_page)
