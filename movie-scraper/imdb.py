@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 import sys
+import textwrap
 from bs4 import BeautifulSoup
 import urllib3
-import textwrap
 
 ROOT = 'http://www.imdb.com'
 
@@ -32,7 +32,7 @@ def req(url, **kwargs):
                           fields=fields,
                           headers=HEADERS)
     if result.status == 200:
-        return result.data
+        return BeautifulSoup(result.data, 'html.parser')
 
 
 def get_list(movie):
@@ -43,15 +43,13 @@ def get_page(link):
     return req(link)
 
 
-def get_page_link(movie):
-    soup = BeautifulSoup(get_list(movie), 'html.parser')
-    findList = soup.find_all('table', {'class': 'findList'})
-    link = '{0}{1}'.format(ROOT, findList[0].a.attrs['href'])
+def get_page_link(soup):
+    findlist = soup.find_all('table', {'class': 'findList'})
+    link = '{0}{1}'.format(ROOT, findlist[0].a.attrs['href'])
     return link
 
 
-def get_rating(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_rating(soup):
     rating = soup.find('meta', {'itemprop': 'contentRating'})
     if rating is None:
         rating = soup.find('span', {'itemprop': 'contentRating'})
@@ -62,40 +60,34 @@ def get_rating(page):
     return ''
 
 
-def get_title(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_title(soup):
     title = soup.find('h1', {'itemprop': 'name'})
     return title.text
 
-def get_synopsis(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_synopsis(soup):
     synop = soup.find('div', {'class': 'summary_text'})
     return synop.text.strip()
 
 
 
-def get_year(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_year(soup):
     year = soup.find('span', {'id': 'titleYear'})
     return year.text
 
 
-def get_rating_value(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_rating_value(soup):
     rating_value = soup.find('span', {'itemprop': 'ratingValue'})
     if rating_value is not None:
         return rating_value.text
     return ''
 
-def get_parental_advisory_link(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_parental_advisory_link(soup):
     linkdata = soup.find_all('span', {'itemprop': 'audience'})
     link = '{0}{1}'.format(ROOT, linkdata[0].a.attrs['href'])
     return link
 
 
-def get_parental_advisory(page):
-    soup = BeautifulSoup(page, 'html.parser')
+def get_parental_advisory(soup):
     advisories = {}
     sections = soup.find_all('section')
     for section in sections:
@@ -107,20 +99,27 @@ def get_parental_advisory(page):
     return advisories
 
 
-if __name__ == "__main__":
+def render_output():
+    print('-' * 72)
+    wrapper = textwrap.TextWrapper(width=79, subsequent_indent=(' ' * 32))
     movielookup = ' '.join(sys.argv[1:])
-    page_link = get_page_link(movielookup)
+    page_link = get_page_link(get_list(movielookup))
     imdbpage = get_page(page_link)
     name = get_title(imdbpage)
     certification = get_rating(imdbpage)
     rtg_val = (float(get_rating_value(imdbpage)) * 10.0)
     adv_link = get_parental_advisory_link(imdbpage)
     adv_page = get_page(adv_link)
-    print('{}Title{}: {}'.format(GREEN, NORMAL, name))
-    print('{}Certification{}: {}'.format(GREEN, NORMAL, certification, ))
-    print('{}Synopsis{}: {}'.format(GREEN, NORMAL, textwrap.fill(get_synopsis(imdbpage), width=79)))
-    print('{}Rating{}: {:.0f}%'.format(GREEN, NORMAL, rtg_val, ))
+    print('{}{:>30}{}: {}'.format(GREEN, 'Title', NORMAL, name))
+    print('{}{:>30}{}: {}'.format(GREEN, 'Certification', NORMAL, certification, ))
+    print('{}{:>30}{}: {}'.format(GREEN, 'Synopsis', NORMAL, wrapper.fill(get_synopsis(imdbpage))))
+    print('{}{:>30}{}: {:.0f}%'.format(GREEN, 'Rating', NORMAL, rtg_val, ))
     found_advisories = get_parental_advisory(adv_page)
     for advisory in found_advisories:
-        print('{}{}{}: {}'.format(GREEN, advisory, NORMAL, textwrap.fill(found_advisories[advisory], width=79),))
+        print('{}{:>30}{}: {}'.format(GREEN, advisory, NORMAL,
+                                      wrapper.fill(found_advisories[advisory]),))
     print('-' * 72)
+
+
+if __name__ == "__main__":
+    render_output()
