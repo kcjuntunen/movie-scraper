@@ -3,6 +3,7 @@
 import sys
 from bs4 import BeautifulSoup
 import urllib3
+import textwrap
 
 ROOT = 'http://www.imdb.com'
 
@@ -57,8 +58,7 @@ def get_rating(page):
     if rating is not None:
         if 'content' in rating.attrs:
             return rating.attrs['content']
-        else:
-            return rating.text
+        return rating.text
     return ''
 
 
@@ -85,8 +85,7 @@ def get_rating_value(page):
     rating_value = soup.find('span', {'itemprop': 'ratingValue'})
     if rating_value is not None:
         return rating_value.text
-    else:
-        return ''
+    return ''
 
 def get_parental_advisory_link(page):
     soup = BeautifulSoup(page, 'html.parser')
@@ -119,9 +118,9 @@ if __name__ == "__main__":
     adv_page = get_page(adv_link)
     print('{}Title{}: {}'.format(GREEN, NORMAL, name))
     print('{}Certification{}: {}'.format(GREEN, NORMAL, certification, ))
-    print('{}Synopsis{}: {}'.format(GREEN, NORMAL, get_synopsis(imdbpage)))
+    print('{}Synopsis{}: {}'.format(GREEN, NORMAL, textwrap.fill(get_synopsis(imdbpage), width=79)))
     print('{}Rating{}: {:.0f}%'.format(GREEN, NORMAL, rtg_val, ))
     found_advisories = get_parental_advisory(adv_page)
     for advisory in found_advisories:
-        print('{}{}{}: {}'.format(GREEN, advisory, NORMAL, found_advisories[advisory],))
+        print('{}{}{}: {}'.format(GREEN, advisory, NORMAL, textwrap.fill(found_advisories[advisory], width=79),))
     print('-' * 72)
