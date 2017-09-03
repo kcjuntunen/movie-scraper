@@ -18,6 +18,9 @@ HEADERS = {'accept':
            'Chrome/60.0.3112.78 '
            'Safari/537.36 OPR/47.0.2631.55', }
 
+GREEN = '\033[1;32;99m'
+NORMAL = '\033[0m'
+
 
 def req(url, **kwargs):
     fields = kwargs.get('fields', {})
@@ -49,8 +52,13 @@ def get_page_link(movie):
 def get_rating(page):
     soup = BeautifulSoup(page, 'html.parser')
     rating = soup.find('meta', {'itemprop': 'contentRating'})
+    if rating is None:
+        rating = soup.find('span', {'itemprop': 'contentRating'})
     if rating is not None:
-        return rating.attrs['content']
+        if 'content' in rating.attrs:
+            return rating.attrs['content']
+        else:
+            return rating.text
     return ''
 
 
@@ -58,6 +66,12 @@ def get_title(page):
     soup = BeautifulSoup(page, 'html.parser')
     title = soup.find('h1', {'itemprop': 'name'})
     return title.text
+
+def get_synopsis(page):
+    soup = BeautifulSoup(page, 'html.parser')
+    synop = soup.find('div', {'class': 'summary_text'})
+    return synop.text.strip()
+
 
 
 def get_year(page):
@@ -103,10 +117,11 @@ if __name__ == "__main__":
     rtg_val = (float(get_rating_value(imdbpage)) * 10.0)
     adv_link = get_parental_advisory_link(imdbpage)
     adv_page = get_page(adv_link)
-    print('Title: {0}'.format(name))
-    print('Certification: {0}'.format(certification, ))
-    print('Rating {0:.0f}%'.format(rtg_val, ))
-    print('-' * 40)
+    print('{}Title{}: {}'.format(GREEN, NORMAL, name))
+    print('{}Certification{}: {}'.format(GREEN, NORMAL, certification, ))
+    print('{}Synopsis{}: {}'.format(GREEN, NORMAL, get_synopsis(imdbpage)))
+    print('{}Rating{}: {:.0f}%'.format(GREEN, NORMAL, rtg_val, ))
     found_advisories = get_parental_advisory(adv_page)
     for advisory in found_advisories:
-        print('{0}: {1}'.format(advisory, found_advisories[advisory],))
+        print('{}{}{}: {}'.format(GREEN, advisory, NORMAL, found_advisories[advisory],))
+    print('-' * 72)
