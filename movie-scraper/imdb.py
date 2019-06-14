@@ -82,10 +82,11 @@ def get_rating_value(soup):
     return ''
 
 def get_parental_advisory_link(soup):
-    linkdata = soup.find_all('span', {'itemprop': 'audience'})
-    link = '{0}{1}'.format(ROOT, linkdata[0].a.attrs['href'])
-    return link
-
+    linkdata = soup.find_all('div', {'class': 'quicklinkSectionItem'})
+    for link in linkdata:
+        if 'parent' in link.a.attrs['href']:
+            return '{0}{1}'.format(ROOT, link.a.attrs['href'])
+    return ''
 
 def get_parental_advisory(soup):
     advisories = {}
