@@ -108,7 +108,7 @@ def render_output():
     page_link = get_page_link(get_list(movielookup))
     imdbpage = get_page(page_link)
     name = get_title(imdbpage)
-    certification = get_rating(imdbpage)
+    certification = get_cert(imdbpage)
     rtg_val = (float(get_rating_value(imdbpage)) * 10.0)
     adv_link = get_parental_advisory_link(imdbpage)
     adv_page = get_page(adv_link)
