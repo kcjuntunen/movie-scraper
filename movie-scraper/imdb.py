@@ -48,21 +48,20 @@ def get_page_link(soup):
     link = '{0}{1}'.format(ROOT, findlist[0].a.attrs['href'])
     return link
 
-
-def get_rating(soup):
-    rating = soup.find('meta', {'itemprop': 'contentRating'})
-    if rating is None:
-        rating = soup.find('span', {'itemprop': 'contentRating'})
-    if rating is not None:
-        if 'content' in rating.attrs:
-            return rating.attrs['content']
-        return rating.text
-    return ''
-
+def get_cert(soup):
+    rating = soup.find_all('div', {'class': 'txt-block'})
+    for r in rating:
+        if 'ertif' in r.text:
+            substrings = r.text.split('\n')
+            if len(substrings) > 2:
+                return substrings[2]
+    return "[Nothin']"
 
 def get_title(soup):
-    title = soup.find('h1', {'itemprop': 'name'})
-    return title.text
+    title = soup.find('h1', {'class': ''})
+    if title is not None:
+        return title.text
+    return "[Can't figure out title]"
 
 def get_synopsis(soup):
     synop = soup.find('div', {'class': 'summary_text'})
@@ -79,7 +78,6 @@ def get_rating_value(soup):
     rating_value = soup.find('span', {'itemprop': 'ratingValue'})
     if rating_value is not None:
         return rating_value.text
-    return ''
 
 def get_parental_advisory_link(soup):
     linkdata = soup.find_all('div', {'class': 'quicklinkSectionItem'})
