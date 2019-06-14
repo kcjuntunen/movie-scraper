@@ -93,8 +93,11 @@ def get_parental_advisory(soup):
         if 'id' in section.attrs.keys():
             if 'advisory' in section.attrs['id']:
                 title = section.find('h4').text
-                j = section.find_all('li', attrs={'class': 'ipl-zebra-list__item'})[0]
-                advisories[title] = j.text.replace('Edit', '').replace('\n', '').strip()
+                j = section.find_all('li', attrs={'class': 'ipl-zebra-list__item'})
+                if len(j) < 1:
+                    return advisories
+                k = j[0]
+                advisories[title] = k.text.replace('Edit', '').replace('\n', '').strip()
     return advisories
 
 
