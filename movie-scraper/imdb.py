@@ -54,7 +54,7 @@ def get_cert(soup):
         if 'ertif' in r.text:
             substrings = r.text.split('\n')
             if len(substrings) > 2:
-                return substrings[2]
+                return substrings[2].strip()
     return "[Nothin']"
 
 def get_title(soup):
