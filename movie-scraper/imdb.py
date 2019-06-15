@@ -48,6 +48,7 @@ def get_page_link(soup):
     link = '{0}{1}'.format(ROOT, findlist[0].a.attrs['href'])
     return link
 
+
 def get_cert(soup):
     rating = soup.find_all('div', {'class': 'txt-block'})
     for r in rating:
@@ -57,16 +58,17 @@ def get_cert(soup):
                 return substrings[2].strip()
     return "[Nothin']"
 
+
 def get_title(soup):
     title = soup.find('h1', {'class': ''})
     if title is not None:
         return title.text
     return "[Can't figure out title]"
 
+
 def get_synopsis(soup):
     synop = soup.find('div', {'class': 'summary_text'})
     return synop.text.strip()
-
 
 
 def get_year(soup):
@@ -79,12 +81,14 @@ def get_rating_value(soup):
     if rating_value is not None:
         return rating_value.text
 
+
 def get_parental_advisory_link(soup):
     linkdata = soup.find_all('div', {'class': 'quicklinkSectionItem'})
     for link in linkdata:
         if 'parent' in link.a.attrs['href']:
             return '{0}{1}'.format(ROOT, link.a.attrs['href'])
     return ''
+
 
 def get_parental_advisory(soup):
     advisories = {}
@@ -93,11 +97,13 @@ def get_parental_advisory(soup):
         if 'id' in section.attrs.keys():
             if 'advisory' in section.attrs['id']:
                 title = section.find('h4').text
-                j = section.find_all('li', attrs={'class': 'ipl-zebra-list__item'})
-                if len(j) < 1:
+                j = section.find_all(
+                    'li', attrs={'class': 'ipl-zebra-list__item'})
+                if not j:
                     return advisories
                 k = j[0]
-                advisories[title] = k.text.replace('Edit', '').replace('\n', '').strip()
+                advisories[title] = k.text.replace(
+                    'Edit', '').replace('\n', '').strip()
     return advisories
 
 
@@ -114,7 +120,8 @@ def render_output():
     adv_page = get_page(adv_link)
     print('{}{:>30}{}: {}'.format(GREEN, 'Title', NORMAL, name))
     print('{}{:>30}{}: {}'.format(GREEN, 'Certification', NORMAL, certification, ))
-    print('{}{:>30}{}: {}'.format(GREEN, 'Synopsis', NORMAL, wrapper.fill(get_synopsis(imdbpage))))
+    print('{}{:>30}{}: {}'.format(GREEN, 'Synopsis',
+                                  NORMAL, wrapper.fill(get_synopsis(imdbpage))))
     print('{}{:>30}{}: {:.0f}%'.format(GREEN, 'Rating', NORMAL, rtg_val, ))
     found_advisories = get_parental_advisory(adv_page)
     for advisory in found_advisories:
