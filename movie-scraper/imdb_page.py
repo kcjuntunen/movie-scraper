@@ -140,6 +140,7 @@ class ImdbPage(object):
                             'li', attrs={'class': 'ipl-zebra-list__item'})
                         if not adv:
                             self.advisories = advisories
+                            return self.advisories
                         item = adv[0]
                         advisories[title] = item.text.replace(
                             'Edit', '').replace('\n', '').strip()
