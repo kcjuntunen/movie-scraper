@@ -1,5 +1,7 @@
+from os import linesep
+from textwrap import TextWrapper
 from bs4 import BeautifulSoup
-import urllib3
+from urllib3 import Timeout, PoolManager
 
 ROOT = 'http://www.imdb.com'
 
@@ -21,8 +23,8 @@ NORMAL = '\033[0m'
 
 def request(url, **kwargs):
     fields = kwargs.get('fields', {})
-    timeout = urllib3.Timeout(connect=2.0, read=10.0)
-    http = urllib3.PoolManager(timeout=timeout)
+    timeout = Timeout(connect=2.0, read=10.0)
+    http = PoolManager(timeout=timeout)
     result = http.request('GET',
                           url,
                           fields=fields,
