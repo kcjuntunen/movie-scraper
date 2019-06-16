@@ -73,6 +73,27 @@ class ImdbPage(object):
                         ROOT, link.a.attrs['href'])
         return self.advisory_link
 
+    def __generate_output(self):
+        frmt = '{}{:>30}{}: {}{}'
+        wrapper = TextWrapper(width=79, subsequent_indent=(' ' * 32))
+        output = frmt.format(GREEN, 'Title', NORMAL, self.Title, linesep)
+        output += frmt.format(GREEN, 'Year', NORMAL, self.Year, linesep)
+        output += frmt.format(GREEN, 'Certification', NORMAL, self.Certification, linesep)
+        synopsis = wrapper.fill(self.Synopsis)
+        output += frmt.format(GREEN, 'Synopsis', NORMAL, synopsis, linesep)
+        try:
+            rtg = "{:.0f}%".format(float(self.Rating) * 10.0)
+            output += frmt.format(GREEN, 'Rating', NORMAL, rtg, linesep)
+        except:
+            pass
+        for advisory in self.Advisories:
+            txt = wrapper.fill(self.Advisories[advisory])
+            output += frmt.format(GREEN, advisory, NORMAL, txt, linesep)
+        return output
+
+    def Render(self):
+        print(self.__generate_output())
+
     @property
     def Title(self):
         if self.title is None:
