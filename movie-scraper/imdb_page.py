@@ -37,32 +37,31 @@ def request(url, **kwargs):
                           headers=HEADERS)
     if result.status == 200:
         return BeautifulSoup(result.data, 'html.parser')
+    return None
 
 
-class ImdbPage(object):
+class ImdbPage():
     """Represnts IMDB page data."""
 
     def __init__(self, search_term):
         self.search_term = search_term
         self.raw_data = None
         self.page_link = None
-        self.title = None
-        self.synopsis = None
-        self.certification = None
+        self.__title = None
+        self.__synopsis = None
+        self.__certification = None
         self.rating_value = None
         self.advisory_link = None
-        self.advisories = None
+        self.__advisories = None
         self.advisory_page = None
-        self.year = None
+        self.__year = None
         self.__search()
 
     def __search(self):
-        movie_list = self.__get_list()
+        movie_list = request('{0}/find/'.format(ROOT, ),
+                             fields={"q": self.search_term})
         self.__get_page_link(movie_list)
         self.__get_page()
-
-    def __get_list(self):
-        return request('{0}/find/'.format(ROOT, ), fields={"q": self.search_term})
 
     def __get_page(self):
         self.raw_data = request(self.page_link)
@@ -84,47 +83,49 @@ class ImdbPage(object):
     def __generate_output(self):
         frmt = '{}{:>30}{}: {}{}'
         wrapper = TextWrapper(width=79, subsequent_indent=(' ' * 32))
-        output = frmt.format(GREEN, 'Title', NORMAL, self.Title, linesep)
-        output += frmt.format(GREEN, 'Year', NORMAL, self.Year, linesep)
-        output += frmt.format(GREEN, 'Certification', NORMAL, self.Certification, linesep)
-        synopsis = wrapper.fill(self.Synopsis)
+        output = frmt.format(GREEN, 'Title', NORMAL, self.title, linesep)
+        output += frmt.format(GREEN, 'Year', NORMAL, self.year, linesep)
+        output += frmt.format(GREEN, 'Certification', NORMAL,
+                              self.certification, linesep)
+        synopsis = wrapper.fill(self.synopsis)
         output += frmt.format(GREEN, 'Synopsis', NORMAL, synopsis, linesep)
         try:
             rtg = "{:.0f}%".format(float(self.Rating) * 10.0)
             output += frmt.format(GREEN, 'Rating', NORMAL, rtg, linesep)
         except:
             pass
-        for advisory in self.Advisories:
-            txt = wrapper.fill(self.Advisories[advisory])
+        for advisory in self.advisories:
+            txt = wrapper.fill(self.advisories[advisory])
             output += frmt.format(GREEN, advisory, NORMAL, txt, linesep)
         return output
 
-    def Render(self):
+    def render(self):
+        """Render the data in a shell-presentable format."""
         print(self.__generate_output())
 
     @property
-    def Title(self):
-        if self.title is None:
-            title = self.raw_data.find('h1', {'class': ''})
-            if title is not None:
-                self.title = title.text.split('\xa0')[0]
+    def title(self):
+        if self.__title is None:
+            _title = self.raw_data.find('h1', {'class': ''})
+            if _title is not None:
+                self.__title = _title.text.split('\xa0')[0]
             else:
-                self.title = "[Can't figure out title]"
-        return self.title
+                self.__title = "[Can't figure out title]"
+        return self.__title
 
     @property
-    def Certification(self):
-        if self.certification is None:
+    def certification(self):
+        if self.__certification is None:
             txt_blocks = self.raw_data.find_all('div', {'class': 'txt-block'})
             for block in txt_blocks:
                 if 'ertif' in block.text:
                     substrings = block.text.split('\n')
                     if len(substrings) > 2:
-                        self.certification = substrings[2].strip()
-        return self.certification
+                        self.__certification = substrings[2].strip()
+        return self.__certification
 
     @property
-    def Rating(self):
+    def rating(self):
         if self.rating_value is None:
             rating_value = self.raw_data.find(
                 'span', {'itemprop': 'ratingValue'})
@@ -135,29 +136,29 @@ class ImdbPage(object):
         return self.rating_value
 
     @property
-    def Synopsis(self):
-        if self.synopsis is None:
-            synopsis = self.raw_data.find('div', {'class': 'summary_text'})
-            if synopsis is not None:
-                self.synopsis = synopsis.text.strip()
+    def synopsis(self):
+        if self.__synopsis is None:
+            _synopsis = self.raw_data.find('div', {'class': 'summary_text'})
+            if _synopsis is not None:
+                self.__synopsis = _synopsis.text.strip()
             else:
-                self.synopsis = "[Can't figure out synopsis]"
-        return self.synopsis
+                self.__synopsis = "[Can't figure out synopsis]"
+        return self.__synopsis
 
     @property
-    def Year(self):
-        if self.year is None:
-            year = self.raw_data.find('span', {'id': 'titleYear'})
-            if year is not None:
-                self.year = year.text.strip()
+    def year(self):
+        if self.__year is None:
+            _year = self.raw_data.find('span', {'id': 'titleYear'})
+            if _year is not None:
+                self.__year = _year.text.strip()
             else:
-                self.year = "[Can't figure out year]"
-        return self.year
+                self.__year = "[Can't figure out year]"
+        return self.__year
 
     @property
-    def Advisories(self):
-        advisories = {}
-        if self.advisories is None:
+    def advisories(self):
+        _advisories = {}
+        if self.__advisories is None:
             self.__get_parental_advisory_link()
             self.advisory_page = request(self.advisory_link)
             sections = self.advisory_page.find_all('section')
@@ -168,10 +169,10 @@ class ImdbPage(object):
                         adv = section.find_all(
                             'li', attrs={'class': 'ipl-zebra-list__item'})
                         if not adv:
-                            self.advisories = advisories
+                            self.__advisories = _advisories
                             return self.advisories
                         item = adv[0]
-                        advisories[title] = item.text.replace(
+                        _advisories[title] = item.text.replace(
                             'Edit', '').replace('\n', '').strip()
-            self.advisories = advisories
-        return self.advisories
+            self.__advisories = _advisories
+        return self.__advisories
