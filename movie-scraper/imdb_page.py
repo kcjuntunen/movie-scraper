@@ -9,14 +9,22 @@ from urllib3 import Timeout, PoolManager
 ROOT = 'http://www.imdb.com'
 
 HEADERS = {'accept':
-           'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+           'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,'
+           'image/apng,*/*;q=0.8',
+
            'accept-encoding': 'gzip, deflate, br',
+
            'accept-language': 'en-US,en;q=0.8',
+
            'cache-control': 'max-age=0',
+
            'dnt': '1',
+
            'upgrade-insecure-requests': '1',
+
            'user-agent':
-           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+           '(KHTML, like Gecko) '
            'Chrome/60.0.3112.78 '
            'Safari/537.36 OPR/47.0.2631.55', }
 
@@ -43,6 +51,9 @@ def request(url, **kwargs):
 class ImdbPage():
     """Represnts IMDB page data."""
 
+    # pylint: disable=too-many-instance-attributes
+    # This is the stuff I want from the page. Maybe I should
+    # create some type of base object to hold them all?
     def __init__(self, search_term):
         self.search_term = search_term
         self.raw_data = None
@@ -90,9 +101,10 @@ class ImdbPage():
         synopsis = wrapper.fill(self.synopsis)
         output += frmt.format(GREEN, 'Synopsis', NORMAL, synopsis, linesep)
         try:
-            rtg = "{:.0f}%".format(float(self.Rating) * 10.0)
+            rtg = "{:.0f}%".format(float(self.rating) * 10.0)
             output += frmt.format(GREEN, 'Rating', NORMAL, rtg, linesep)
-        except:
+        except ValueError:
+            # We got something we didn't expect.
             pass
         for advisory in self.advisories:
             txt = wrapper.fill(self.advisories[advisory])
@@ -105,6 +117,7 @@ class ImdbPage():
 
     @property
     def title(self):
+        """The title of the movie."""
         if self.__title is None:
             _title = self.raw_data.find('h1', {'class': ''})
             if _title is not None:
@@ -115,6 +128,7 @@ class ImdbPage():
 
     @property
     def certification(self):
+        """The certification (rating) of the movie."""
         if self.__certification is None:
             txt_blocks = self.raw_data.find_all('div', {'class': 'txt-block'})
             for block in txt_blocks:
@@ -126,6 +140,7 @@ class ImdbPage():
 
     @property
     def rating(self):
+        """The critical rating of the movie (0.0 to 10.0)."""
         if self.rating_value is None:
             rating_value = self.raw_data.find(
                 'span', {'itemprop': 'ratingValue'})
@@ -137,6 +152,7 @@ class ImdbPage():
 
     @property
     def synopsis(self):
+        """The synopsis of the movie."""
         if self.__synopsis is None:
             _synopsis = self.raw_data.find('div', {'class': 'summary_text'})
             if _synopsis is not None:
@@ -147,6 +163,7 @@ class ImdbPage():
 
     @property
     def year(self):
+        """The release year of the movie."""
         if self.__year is None:
             _year = self.raw_data.find('span', {'id': 'titleYear'})
             if _year is not None:
@@ -157,6 +174,7 @@ class ImdbPage():
 
     @property
     def advisories(self):
+        """A dictionary of parental advisories."""
         _advisories = {}
         if self.__advisories is None:
             self.__get_parental_advisory_link()
