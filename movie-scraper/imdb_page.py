@@ -119,7 +119,7 @@ class ImdbPage():
     def title(self):
         """The title of the movie."""
         if self.__title is None:
-            _title = self.raw_data.find('h1', {'class': ''})
+            _title = self.raw_data.find('h1', )
             if _title is not None:
                 self.__title = _title.text.split('\xa0')[0]
             else:
