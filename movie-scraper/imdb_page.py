@@ -1,3 +1,6 @@
+"""
+An object that parses an ImdbPage and exposes its content.
+"""
 from os import linesep
 from textwrap import TextWrapper
 from bs4 import BeautifulSoup
@@ -22,6 +25,9 @@ NORMAL = '\033[0m'
 
 
 def request(url, **kwargs):
+    """
+    Return a BeautifulSoup object by downloading `url`.
+    """
     fields = kwargs.get('fields', {})
     timeout = Timeout(connect=2.0, read=10.0)
     http = PoolManager(timeout=timeout)
